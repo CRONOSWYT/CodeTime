@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeTime - HTML </title>
+
+<link rel="stylesheet" href="../styles/lenguajes.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+<header class="header">
+    <div class="header-content">
+        <div class="logo">
+                    <i class="fas fa-code"></i>
+                    <h1>HTML</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="home-button">
+                        <a href="index.html" class="btn-home">
+                            <i class="fas fa-home"></i>
+                            <span>Inicio</span>
+                        </a>
+                    </div>
+
+        <button id="loginBtn" class="btn">Login Google</button>
+        <button id="logoutBtn" class="btn" style="display:none;">Cerrar sesión</button>
+    </div>
+</header>
+
+<main class="content">
+     <section class="welcome-section" id="welcomeSection">
+                <h1>Etiquetas HTML</h1>
+                <p>Explora las etiquetas más importantes de HTML y sus propiedades</p>
+            </section>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar etiquetas HTML, elementos, propiedades...">
+                </div>
+                <button id="clearSearch" class="clear-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+    <h2>Tarjetas</h2>
+
+    <button id="addCardBtn" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nueva Tarjeta
+    </button>
+
+    <div id="cardsContainer" class="tags-grid"></div>
+</main>
+
+<!-- MODAL VER TARJETA -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" id="closeModal">&times;</button>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<!-- MODAL EDITOR TARJETA -->
+<div id="editorModal" class="modal">
+    <div class="modal-content editor-modal-content">
+        <button class="modal-close" id="closeEditorModal">&times;</button>
+        <div class="modal-header">
+            <h2 id="editorTitle">Nueva Tarjeta</h2>
+        </div>
+        <div class="modal-body">
+            <div class="editor-form">
+                <div class="form-group">
+                    <label for="cardTitle">Título:</label>
+                    <input type="text" id="cardTitle" placeholder="Título de la tarjeta" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="cardDescription">Descripción:</label>
+                    <textarea id="cardDescription" placeholder="Descripción breve" maxlength="200" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="cardContent">Contenido (Formato Markdown):</label>
+                    <div class="editor-toolbar">
+                        <button type="button" class="format-btn" data-format="bold" title="Negrita: **texto**">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="italic" title="Itálica: *texto*">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="code" title="Código: ```código```">
+                            <i class="fas fa-code"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="link" title="Enlace: [texto](url)">
+                            <i class="fas fa-link"></i>
+                        </button>
+                        <div class="separator"></div>
+                        <button type="button" class="format-btn" data-format="heading" title="Encabezado: # Texto">
+                            <i class="fas fa-heading"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="list" title="Lista: - item">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="quote" title="Cita: > texto">
+                            <i class="fas fa-quote-left"></i>
+                        </button>
+                        <div class="separator"></div>
+                        <button type="button" class="format-btn" data-format="clear" title="Limpiar todo">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+                    <textarea id="cardContent" placeholder="Puedes usar formato Markdown&#10;**negrita** | *itálica* | ```código``` | # Título" rows="10"></textarea>
+                </div>
+
+                <div class="editor-split">
+                    <div class="editor-preview">
+                        <h3>Preview:</h3>
+                        <div id="contentPreview" class="content-preview"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="saveCardBtn" class="btn btn-primary">Guardar</button>
+                    <button type="button" id="deleteCardBtn" class="btn btn-danger" style="display:none;">Eliminar</button>
+                    <button type="button" id="cancelCardBtn" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+/* ================= SUPABASE ================= */
+const supabase = createClient(
+    "https://ttmrvogucsmujegurmvi.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bXJ2b2d1Y3NtdWplZ3VybXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDE2OTIsImV4cCI6MjA5Mjk3NzY5Mn0.8NrHzYYIXrTYOpdLJafAemXnZ8bJ1DhVwSU7hQx_3pQ"
+);
+
+let user = null;
+let currentEditingCard = null;
+
+/* ================= Markdown FORMAT ================= */
+function Markdown(text = "") {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/^### (.*?)$/gm, "<h3>$1</h3>")
+        .replace(/^## (.*?)$/gm, "<h2>$1</h2>")
+        .replace(/^# (.*?)$/gm, "<h1>$1</h1>")
+        .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/g, "<em>$1</em>")
+        .replace(/__(.*?)__/g, "<u>$1</u>")
+        .replace(/~~(.*?)~~/g, "<del>$1</del>")
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+        .replace(/^> (.*?)$/gm, "<blockquote>$1</blockquote>")
+        .replace(/^- (.*?)$/gm, "<li>$1</li>")
+        .replace(/(<li>.*?<\/li>)/s, "<ul>$1</ul>")
+        .replace(/\n/g, "<br>");
+}
+
+/* ================= UI ELEMENTS ================= */
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const addCardBtn = document.getElementById("addCardBtn");
+const modal = document.getElementById("modal");
+const closeModal = document.getElementById("closeModal");
+const editorModal = document.getElementById("editorModal");
+const closeEditorModal = document.getElementById("closeEditorModal");
+const cardTitle = document.getElementById("cardTitle");
+const cardDescription = document.getElementById("cardDescription");
+const cardContent = document.getElementById("cardContent");
+const saveCardBtn = document.getElementById("saveCardBtn");
+const deleteCardBtn = document.getElementById("deleteCardBtn");
+const cancelCardBtn = document.getElementById("cancelCardBtn");
+const contentPreview = document.getElementById("contentPreview");
+const editorTitle = document.getElementById("editorTitle");
+
+/* ================= LOGIN ================= */
+loginBtn.onclick = async () => {
+    await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.href }
+    });
+};
+
+/* ================= LOGOUT ================= */
+logoutBtn.onclick = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+};
+
+/* ================= SESSION ================= */
+async function getSession() {
+    const { data } = await supabase.auth.getSession();
+    user = data?.session?.user || null;
+    updateUI();
+}
+
+function updateUI(){
+    loginBtn.style.display = user ? "none" : "block";
+    logoutBtn.style.display = user ? "block" : "none";
+}
+
+/* ================= LOAD CARDS ================= */
+async function loadCards(){
+    const { data } = await supabase
+        .from("html")
+        .select("*")
+        .order("updated_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+
+    allCards = data || [];
+    renderCards(allCards);
+    searchInput.value = "";
+    searchSuggestions.innerHTML = "";
+}
+
+/* ================= FORMAT HELPERS ================= */
+function insertFormat(format) {
+    const textarea = cardContent;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end) || "texto";
+    let insertion = "";
+
+    switch(format) {
+        case "bold":
+            insertion = `**${selected}**`;
+            break;
+        case "italic":
+            insertion = `*${selected}*`;
+            break;
+        case "code":
+            insertion = `\`\`\`\n${selected}\n\`\`\``;
+            break;
+        case "link":
+            insertion = `[${selected}](https://ejemplo.com)`;
+            break;
+        case "heading":
+            insertion = `# ${selected}`;
+            break;
+        case "list":
+            insertion = `- ${selected}`;
+            break;
+        case "quote":
+            insertion = `> ${selected}`;
+            break;
+        case "clear":
+            if (confirm("¿Limpiar todo el contenido?")) {
+                cardContent.value = "";
+                updatePreview();
+            }
+            return;
+    }
+
+    if (insertion) {
+        cardContent.value = cardContent.value.substring(0, start) + insertion + cardContent.value.substring(end);
+        updatePreview();
+    }
+}
+
+function updatePreview() {
+    contentPreview.innerHTML = Markdown(cardContent.value);
+}
+
+/* ================= FORMAT BUTTONS ================= */
+document.querySelectorAll(".format-btn").forEach(btn => {
+    btn.onclick = (e) => {
+        e.preventDefault();
+        insertFormat(btn.dataset.format);
+    };
+});
+
+/* ================= CARD CONTENT LISTENER ================= */
+cardContent.addEventListener("input", updatePreview);
+
+/* ================= CREATE CARD ================= */
+addCardBtn.onclick = () => {
+    if(!user) return alert("Debes iniciar sesión");
+    openEditor();
+};
+
+/* ================= OPEN EDITOR ================= */
+function openEditor(card = null) {
+    currentEditingCard = card;
+    
+    editorTitle.textContent = card ? "Editar Tarjeta" : "Nueva Tarjeta";
+    cardTitle.value = card?.titulo || "";
+    cardDescription.value = card?.descripcion || "";
+    cardContent.value = card?.contenido || "";
+    deleteCardBtn.style.display = card ? "block" : "none";
+    
+    updatePreview();
+    editorModal.style.display = "block";
+    cardTitle.focus();
+}
+
+/* ================= SAVE CARD ================= */
+saveCardBtn.onclick = async () => {
+    if (!cardTitle.value.trim()) {
+        return alert("El título es obligatorio");
+    }
+
+    try {
+        if (currentEditingCard) {
+            // UPDATE - Actualizar con timestamp de edición
+            await supabase
+                .from("html")
+                .update({
+                    titulo: cardTitle.value,
+                    descripcion: cardDescription.value,
+                    contenido: cardContent.value,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", currentEditingCard.id);
+        } else {
+            // CREATE
+            await supabase.from("html").insert([{
+                titulo: cardTitle.value,
+                descripcion: cardDescription.value,
+                contenido: cardContent.value,
+                user_id: user.id
+            }]);
+        }
+
+        editorModal.style.display = "none";
+        loadCards();
+    } catch (error) {
+        alert("Error al guardar: " + error.message);
+    }
+};
+
+/* ================= DELETE CARD ================= */
+deleteCardBtn.onclick = async () => {
+    if (!confirm("¿Eliminar esta tarjeta? No se puede deshacer.")) return;
+
+    try {
+        await supabase
+            .from("html")
+            .delete()
+            .eq("id", currentEditingCard.id);
+
+        editorModal.style.display = "none";
+        loadCards();
+    } catch (error) {
+        alert("Error al eliminar: " + error.message);
+    }
+};
+
+/* ================= CANCEL ================= */
+cancelCardBtn.onclick = () => {
+    editorModal.style.display = "none";
+    currentEditingCard = null;
+};
+
+/* ================= OPEN CARD (VIEW) ================= */
+function openCard(doc){
+    const modalBody = document.getElementById("modalBody");
+    
+    // Formatear fechas
+    const createdDate = new Date(doc.created_at);
+    const updatedDate = doc.updated_at ? new Date(doc.updated_at) : null;
+    const isEdited = updatedDate && updatedDate.getTime() !== createdDate.getTime();
+    
+    const createdFormatted = createdDate.toLocaleDateString() + " " + createdDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const updatedFormatted = updatedDate ? updatedDate.toLocaleDateString() + " " + updatedDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+    
+    const metaInfo = isEdited 
+        ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Creada: ${createdFormatted}<br>Editada: ${updatedFormatted}</div>`
+        : `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Creada: ${createdFormatted}</div>`;
+    
+    modalBody.innerHTML = `
+        <div class="modal-header">
+            <h2>${doc.titulo}</h2>
+            ${metaInfo}
+        </div>
+        <div class="modal-body">
+            <p class="card-description">${doc.descripcion || "Sin descripción"}</p>
+            <hr class="divider">
+            <div class="content-box">
+                ${Markdown(doc.contenido || "Sin contenido")}
+            </div>
+            <div class="card-actions">
+                ${user && user.id === doc.user_id ? `
+                    <button id="viewEditBtn" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                ` : ""}
+                <button id="viewCopyBtn" class="btn btn-secondary">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
+                <button id="viewCloseBtn" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    `;
+
+    modal.style.display = "block";
+
+    if(user && user.id === doc.user_id){
+        document.getElementById("viewEditBtn").onclick = () => {
+            modal.style.display = "none";
+            openEditor(doc);
+        };
+    }
+
+    document.getElementById("viewCopyBtn").onclick = () => {
+        const text = `${doc.titulo}\n${doc.descripcion}\n\n${doc.contenido}`;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("¡Contenido copiado!");
+        });
+    };
+
+    document.getElementById("viewCloseBtn").onclick = () => {
+        modal.style.display = "none";
+    };
+}
+
+/* ================= CLOSE MODALS ================= */
+closeModal.onclick = () => {
+    modal.style.display = "none";
+};
+
+closeEditorModal.onclick = () => {
+    editorModal.style.display = "none";
+    currentEditingCard = null;
+};
+
+/* ================= CLOSE ON OUTSIDE CLICK ================= */
+window.onclick = (event) => {
+    if (event.target === modal) modal.style.display = "none";
+    if (event.target === editorModal) {
+        editorModal.style.display = "none";
+        currentEditingCard = null;
+    }
+};
+
+/* ================= SEARCH FUNCTIONALITY ================= */
+let allCards = []; // Almacenar todas las html
+
+const searchInput = document.getElementById("searchInput");
+const clearSearchBtn = document.getElementById("clearSearch");
+const searchSuggestions = document.getElementById("searchSuggestions");
+
+// Renderizar html
+function renderCards(cardsToShow){
+    const container = document.getElementById("cardsContainer");
+    container.innerHTML = "";
+
+    if (!cardsToShow || cardsToShow.length === 0) {
+        container.innerHTML = '<p class="empty-state">No hay tarjetas. ¡Crea la primera!</p>';
+        return;
+    }
+
+    cardsToShow.forEach(doc => {
+        const card = document.createElement("div");
+        card.className = "tag-card";
+
+        const preview = (doc.descripcion || "").slice(0, 100);
+        const hasMore = doc.descripcion && doc.descripcion.length > 100 ? "..." : "";
+        
+        // Mostrar fecha de edición si existe, sino fecha de creación
+        const dateToShow = doc.updated_at ? new Date(doc.updated_at) : new Date(doc.created_at);
+        const isEdited = doc.updated_at && new Date(doc.updated_at).getTime() !== new Date(doc.created_at).getTime();
+        const dateLabel = isEdited ? "Editada" : "Creada";
+        const dateFormatted = dateToShow.toLocaleDateString() + " " + dateToShow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        card.innerHTML = `
+            <div class="card-header">
+                <h3>${doc.titulo}</h3>
+                <span class="card-badge">${doc.contenido ? "✓" : "∘"}</span>
+            </div>
+            <p>${preview}${hasMore}</p>
+            <div class="card-footer">
+                <small>${dateLabel}: ${dateFormatted}</small>
+            </div>
+        `;
+
+        card.onclick = () => openCard(doc);
+        container.appendChild(card);
+    });
+}
+
+// Función de búsqueda
+function performSearch(searchTerm) {
+    const term = searchTerm.toLowerCase().trim();
+    
+    if (!term) {
+        renderCards(allCards);
+        searchSuggestions.innerHTML = "";
+        clearSearchBtn.classList.remove("show");
+        return;
+    }
+
+    // Mostrar botón de limpiar
+    clearSearchBtn.classList.add("show");
+
+    const filtered = allCards.filter(card => {
+        const title = (card.titulo || "").toLowerCase();
+        const description = (card.descripcion || "").toLowerCase();
+        const content = (card.contenido || "").toLowerCase();
+
+        return title.includes(term) || description.includes(term) || content.includes(term);
+    });
+
+    renderCards(filtered);
+    
+    // Mostrar sugerencias
+    if (filtered.length > 0) {
+        const suggestionsHTML = filtered
+            .slice(0, 5)
+            .map(card => `<div class="search-suggestion"><span class="suggestion-tag">${card.titulo}</span><span class="suggestion-description">${(card.descripcion || "").substring(0, 60)}...</span></div>`)
+            .join("");
+        searchSuggestions.innerHTML = suggestionsHTML;
+        searchSuggestions.classList.add("show");
+    } else {
+        searchSuggestions.innerHTML = '<div class="search-suggestion" style="cursor: default;"><span class="suggestion-tag">No se encontraron resultados</span></div>';
+        searchSuggestions.classList.add("show");
+    }
+}
+
+// Event listeners
+searchInput.addEventListener("input", (e) => {
+    performSearch(e.target.value);
+});
+
+clearSearchBtn.onclick = () => {
+    searchInput.value = "";
+    searchSuggestions.innerHTML = "";
+    searchSuggestions.classList.remove("show");
+    clearSearchBtn.classList.remove("show");
+    renderCards(allCards);
+};
+
+// Hacer que las sugerencias sean clickeables
+document.addEventListener("click", (e) => {
+    if (e.target.closest(".search-suggestion")) {
+        const suggestion = e.target.closest(".search-suggestion");
+        const title = suggestion.querySelector(".suggestion-tag")?.textContent;
+        if (title && title !== "No se encontraron resultados") {
+            searchInput.value = title;
+            performSearch(title);
+        }
+    }
+});
+  // Funcionalidad para ocultar/mostrar header al hacer scroll
+      let lastScrollTop = 0;
+      const header = document.querySelector(".header");
+
+      window.addEventListener("scroll", function () {
+        let scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+          // Scrolling down - hide header
+          header.style.transform = "translateY(-100%)";
+          header.style.transition = "transform 0.3s ease-in-out";
+        } else {
+          // Scrolling up - show header
+          header.style.transform = "translateY(0)";
+          header.style.transition = "transform 0.3s ease-in-out";
+        }
+
+        lastScrollTop = scrollTop;
+      });
+/* ================= INIT ================= */
+getSession().then(loadCards);
+
+</script>
+
+</body>
+</html>
