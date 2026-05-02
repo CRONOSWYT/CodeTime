@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>CodeTime</title>
+
+<link rel="icon" href="icons/logo.ico" />
+<link rel="stylesheet" href="styles/codetime.css" />
+<link rel="stylesheet" href="styles/lenguajes.css" />
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+
+<body>
+<div class="container">
+
+<header class="header">
+<img src="icons/logo.ico" class="logo-icon" width="48">
+
+<div>
+<button id="loginBtn" class="btn">Login Google</button>
+<button id="logoutBtn" class="btn" style="display:none;">Cerrar sesión</button>
+</div>
+</header>
+
+<main class="content">
+<section class="welcome-section">
+<h1>CodeTime</h1>
+
+<div class="total-counter">
+<h2>Total: <span id="totalCount">0</span></h2>
+<p id="totalText">Cargando...</p>
+</div>
+  <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar lenguajes...">
+                </div>
+                <button id="clearSearch" class="clear-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+<button id="addLangBtn" class="btn btn-primary" style="display:none;">
+<i class="fas fa-plus"></i> Nuevo Lenguaje
+</button>
+
+<section class="language-grid" id="languageGrid"></section>
+</section>
+</main>
+
+<footer class="site-footer">
+<p>© 2026 CodeTime</p>
+</footer>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+<div class="modal-content">
+        <button class="modal-close" id="closeModal">&times;</button>
+        <div class="modal-header">
+            <h2>Nuevo Lenguaje</h2>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="name">Nombre:</label>
+                <input id="name" placeholder="Nombre (HTML)" />
+            </div>
+            <div class="form-group">
+                <label for="icon">Icono:</label>
+                <input id="icon" placeholder="Icono (fab fa-html5)" />
+            </div>
+            <div class="form-group">
+                <label for="desc">Descripción:</label>
+                <textarea id="desc" placeholder="Descripción"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="saveBtn" class="btn btn-primary">Guardar</button>
+                <button id="closeModalBtn" class="btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+const supabase = window.supabase.createClient(
+"https://ttmrvogucsmujegurmvi.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bXJ2b2d1Y3NtdWplZ3VybXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDE2OTIsImV4cCI6MjA5Mjk3NzY5Mn0.8NrHzYYIXrTYOpdLJafAemXnZ8bJ1DhVwSU7hQx_3pQ"
+);
+
+let user = null;
+let allLanguages = [];
+
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const addLangBtn = document.getElementById("addLangBtn");
+const searchInput = document.getElementById("searchInput");
+const clearSearch = document.getElementById("clearSearch");
+
+loginBtn.onclick = async () => {
+await supabase.auth.signInWithOAuth({
+provider: "google",
+options: { redirectTo: window.location.href }
+});
+};
+
+logoutBtn.onclick = async () => {
+await supabase.auth.signOut();
+location.reload();
+};
+
+async function getUser() {
+const { data } = await supabase.auth.getSession();
+user = data?.session?.user || null;
+
+loginBtn.style.display = user ? "none" : "block";
+logoutBtn.style.display = user ? "block" : "none";
+addLangBtn.style.display = user ? "block" : "none";
+}
+
+/* =========================
+   CARGAR
+========================= */
+
+async function loadLanguages() {
+const { data } = await supabase
+.from("languages")
+.select("*")
+.order("id");
+
+allLanguages = data || [];
+renderLanguages(allLanguages);
+}
+
+/* =========================
+   RENDER
+========================= */
+
+function renderLanguages(languages) {
+const grid = document.getElementById("languageGrid");
+grid.innerHTML = "";
+
+languages.forEach(lang => {
+
+const el = document.createElement("div");
+el.className = "language-card";
+
+el.onclick = () => {
+window.location.href = `language.html?lang=${encodeURIComponent(lang.name)}`;
+};
+
+el.innerHTML = `
+<div class="language-icon">
+<i class="${lang.icon}"></i>
+</div>
+<h3>${lang.name}</h3>
+<p>${lang.description || ""}</p>
+`;
+
+grid.appendChild(el);
+});
+
+updateCounter(languages);
+}
+
+/* =========================
+   CONTADOR
+========================= */
+
+function updateCounter(languages) {
+const total = languages.length;
+
+document.getElementById("totalCount").textContent = total;
+document.getElementById("totalText").textContent =
+`${total} lenguajes disponibles`;
+}
+
+/* =========================
+   CREAR LENGUAJE
+========================= */
+
+const modal = document.getElementById("modal");
+
+addLangBtn.onclick = () => {
+modal.style.display = "block";
+};
+
+document.getElementById("closeModal").onclick = () => {
+modal.style.display = "none";
+};
+
+document.getElementById("closeModalBtn").onclick = () => {
+modal.style.display = "none";
+};
+
+document.getElementById("saveBtn").onclick = async () => {
+
+if (!user) return alert("Debes iniciar sesión");
+
+const name = document.getElementById("name").value;
+const icon = document.getElementById("icon").value;
+const desc = document.getElementById("desc").value;
+
+if (!name) return alert("Nombre obligatorio");
+
+const { error } = await supabase.from("languages").insert([{
+name,
+icon,
+description: desc,
+is_active: true,
+element_count: 0
+}]);
+
+if (error) {
+alert(error.message);
+return;
+}
+
+modal.style.display = "none";
+loadLanguages();
+};
+
+searchInput.addEventListener("input", e => {
+    const term = e.target.value.toLowerCase().trim();
+    if (!term) return renderLanguages(allLanguages);
+
+    const filtered = allLanguages.filter(lang =>
+        (lang.name || "").toLowerCase().includes(term) ||
+        (lang.description || "").toLowerCase().includes(term)
+    );
+
+    renderLanguages(filtered);
+});
+
+clearSearch.onclick = () => {
+    searchInput.value = "";
+    renderLanguages(allLanguages);
+};
+
+/* =========================
+   INIT
+========================= */
+
+getUser().then(loadLanguages);
+
+});
+</script>
+
+</body>
+</html>
