@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>CodeTime - Admin</title>
+
+    <link rel="icon" href="icons/logo.ico" />
+    <link rel="stylesheet" href="styles/general.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+
+  <body>
+    <div class="container">
+      <header class="header" role="banner">
+        <div class="header-content">
+          <div class="logo-container">
+            <img
+              src="icons/logo.ico"
+              alt="CodeTime - Logo de la plataforma de referencia de código"
+              class="logo-icon"
+              width="48"
+              height="48"
+            />
+            <h1>CodeTime - Admin</h1>
+          </div>
+          <div class="header-actions">
+            <div class="home-button">
+              <a href="CodeTime.html" class="btn-home">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+              </a>
+            </div>
+            <div class="home-button">
+              <button id="logoutBtn" class="btn-home"><i class="fa-solid fa-right-to-bracket"></i> Cerrar sesión</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="admin-section">
+          <h1>Panel de Administración</h1>
+
+          <div class="admin-tabs">
+            <button id="tabCards" class="tab-btn active">Tarjetas</button>
+            <button id="tabLanguages" class="tab-btn">Lenguajes</button>
+            <button id="tabUsers" class="tab-btn">Usuarios</button>
+            <button id="tabReports" class="tab-btn">Reportes</button>
+          </div>
+
+          <div id="cardsTab" class="tab-content">
+            <div class="search-container">
+              <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                  type="text"
+                  id="searchCards"
+                  placeholder="Buscar tarjetas por título, descripción o usuario..."
+                />
+              </div>
+              <button id="clearSearchCards" class="clear-btn" aria-label="Limpiar búsqueda de tarjetas">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="admin-actions">
+              <button id="deleteSelectedCards" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Eliminar Seleccionadas
+              </button>
+            </div>
+            <div class="cards-list" id="cardsList"></div>
+          </div>
+
+          <div id="languagesTab" class="tab-content" style="display: none;">
+            <div class="search-container">
+              <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                  type="text"
+                  id="searchLanguages"
+                  placeholder="Buscar lenguajes..."
+                />
+              </div>
+              <button id="clearSearchLanguages" class="clear-btn" aria-label="Limpiar búsqueda de lenguajes">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="admin-actions">
+              <button id="deleteSelectedLanguages" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Eliminar Seleccionados
+              </button>
+            </div>
+            <div class="languages-list" id="languagesList"></div>
+          </div>
+
+          <div id="usersTab" class="tab-content" style="display: none;">
+            <div class="search-container">
+              <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                  type="text"
+                  id="searchUsers"
+                  placeholder="Buscar usuarios por nombre o rol..."
+                />
+              </div>
+              <button id="clearSearchUsers" class="clear-btn" aria-label="Limpiar búsqueda de usuarios">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="admin-actions">
+              <button id="deleteSelectedUsers" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Eliminar Seleccionados
+              </button>
+            </div>
+            <div class="users-list" id="usersList"></div>
+          </div>
+
+          <div id="reportsTab" class="tab-content" style="display: none;">
+            <div class="search-container">
+              <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                  type="text"
+                  id="searchReports"
+                  placeholder="Buscar reportes por entidad, usuario o estado..."
+                />
+              </div>
+              <button id="clearSearchReports" class="clear-btn" aria-label="Limpiar búsqueda de reportes">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="admin-actions">
+              <button id="deleteSelectedReports" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Eliminar Seleccionados
+              </button>
+            </div>
+            <div class="reports-list" id="reportsList"></div>
+          </div>
+        </section>
+
+        <div id="adminModal" class="modal">
+          <div class="modal-content">
+            <button class="modal-close" id="closeAdminModal">&times;</button>
+            <div class="modal-header">
+              <h2 id="adminModalTitle">Editar</h2>
+            </div>
+            <div class="modal-body" id="adminModalBody"></div>
+            <div class="modal-actions">
+              <button id="saveAdminModalBtn" class="btn btn-primary">Guardar</button>
+              <button id="cancelAdminModalBtn" class="btn btn-secondary">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <p>© 2026 CodeTime</p>
+      </footer>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const supabase = window.supabase.createClient(
+          "https://ttmrvogucsmujegurmvi.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bXJ2b2d1Y3NtdWplZ3VybXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDE2OTIsImV4cCI6MjA5Mjk3NzY5Mn0.8NrHzYYIXrTYOpdLJafAemXnZ8bJ1DhVwSU7hQx_3pQ",
+        );
+
+        let user = null;
+        let allCards = [];
+        let allLanguages = [];
+        let allUsers = [];
+        let allRoles = [];
+        let allReports = [];
+        let usersMap = new Map(); // userId -> username
+        let languageMap = new Map();
+        let rolesMap = new Map();
+        let currentAdminItem = null;
+        let currentAdminType = null;
+
+        const logoutBtn = document.getElementById("logoutBtn");
+        const tabCards = document.getElementById("tabCards");
+        const tabLanguages = document.getElementById("tabLanguages");
+        const tabUsers = document.getElementById("tabUsers");
+        const tabReports = document.getElementById("tabReports");
+        const cardsTab = document.getElementById("cardsTab");
+        const languagesTab = document.getElementById("languagesTab");
+        const usersTab = document.getElementById("usersTab");
+        const reportsTab = document.getElementById("reportsTab");
+        const searchCards = document.getElementById("searchCards");
+        const clearSearchCards = document.getElementById("clearSearchCards");
+        const deleteSelectedCards = document.getElementById("deleteSelectedCards");
+        const cardsList = document.getElementById("cardsList");
+        const searchLanguages = document.getElementById("searchLanguages");
+        const clearSearchLanguages = document.getElementById("clearSearchLanguages");
+        const deleteSelectedLanguages = document.getElementById("deleteSelectedLanguages");
+        const languagesList = document.getElementById("languagesList");
+        const searchUsers = document.getElementById("searchUsers");
+        const clearSearchUsers = document.getElementById("clearSearchUsers");
+        const deleteSelectedUsers = document.getElementById("deleteSelectedUsers");
+        const usersList = document.getElementById("usersList");
+        const searchReports = document.getElementById("searchReports");
+        const clearSearchReports = document.getElementById("clearSearchReports");
+        const deleteSelectedReports = document.getElementById("deleteSelectedReports");
+        const reportsList = document.getElementById("reportsList");
+        const adminModal = document.getElementById("adminModal");
+        const closeAdminModal = document.getElementById("closeAdminModal");
+        const saveAdminModalBtn = document.getElementById("saveAdminModalBtn");
+        const cancelAdminModalBtn = document.getElementById("cancelAdminModalBtn");
+        const adminModalTitle = document.getElementById("adminModalTitle");
+        const adminModalBody = document.getElementById("adminModalBody");
+
+        logoutBtn.onclick = async () => {
+          await supabase.auth.signOut();
+          localStorage.removeItem('user');
+          localStorage.removeItem('session');
+          window.location.href = 'login.html';
+        };
+
+        async function getUser() {
+          const storedUser = localStorage.getItem('user');
+          const storedSession = localStorage.getItem('session');
+
+          if (storedUser && storedSession) {
+            user = JSON.parse(storedUser);
+          } else {
+            const { data } = await supabase.auth.getSession();
+            user = data?.session?.user || null;
+            if (user) {
+              localStorage.setItem('user', JSON.stringify(user));
+              localStorage.setItem('session', JSON.stringify(data.session));
+            }
+          }
+
+          if (!user) {
+            window.location.href = 'login.html';
+            return;
+          }
+
+          const { data: perfil } = await supabase
+            .from('perfiles')
+            .select('role_id')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (!perfil || perfil.role_id !== 2) {
+            alert('Acceso denegado. Solo administradores.');
+            window.location.href = 'CodeTime.html';
+            return;
+          }
+
+          loadData();
+        }
+
+        async function loadData() {
+          await loadRoles();
+          await loadLanguages();
+          await loadCards();
+          await loadUsers();
+          await loadReports();
+        }
+
+        async function loadCards() {
+          const { data, error } = await supabase
+            .from("cards")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            console.error(error);
+            return;
+          }
+
+          allCards = data || [];
+
+          const userIds = [...new Set(allCards.map(c => c.user_id).filter(Boolean))];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('perfiles')
+              .select('id, username')
+              .in('id', userIds);
+            usersMap = new Map((profiles || []).map(p => [p.id, p.username]));
+          } else {
+            usersMap = new Map();
+          }
+
+          renderCards(allCards);
+        }
+
+        async function loadLanguages() {
+          const { data } = await supabase
+            .from("languages")
+            .select("*")
+            .order("name");
+
+          allLanguages = data || [];
+          languageMap = new Map(allLanguages.map(lang => [lang.id, lang.name]));
+          renderLanguages(allLanguages);
+        }
+
+        async function loadRoles() {
+          const { data, error } = await supabase
+            .from('roles')
+            .select('*')
+            .order('id');
+
+          allRoles = data || [];
+          rolesMap = new Map(allRoles.map(role => [role.id, role.name]));
+        }
+
+        async function loadUsers() {
+          const { data, error } = await supabase
+            .from('perfiles')
+            .select('id, username, role_id')
+            .order('username');
+
+          if (error) {
+            console.error('Error cargando usuarios:', error);
+            allUsers = [];
+          } else {
+            allUsers = data || [];
+          }
+          renderUsers(allUsers);
+        }
+
+        async function loadReports() {
+          const { data, error } = await supabase
+            .from('reports')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Error cargando reportes:', error);
+            allReports = [];
+          } else {
+            allReports = data || [];
+          }
+          renderReports(allReports);
+        }
+
+        function renderCards(cards) {
+          cardsList.innerHTML = "";
+          cards.forEach((card) => {
+            const el = document.createElement("div");
+            el.className = "card-item";
+            el.innerHTML = `
+              <input type="checkbox" class="card-checkbox" data-id="${card.id}">
+              <div class="card-content">
+                <h3>${card.titulo}</h3>
+                <p><strong>Lenguaje:</strong> ${card.language || languageMap.get(card.language_id) || 'N/A'}</p>
+                <p><strong>Usuario:</strong> ${usersMap.get(card.user_id) || 'N/A'}</p>
+                <p><strong>Descripción:</strong> ${card.descripcion || ''}</p>
+                <p><strong>Creado:</strong> ${new Date(card.created_at).toLocaleDateString()}</p>
+                <button class="btn btn-secondary edit-card-btn" data-id="${card.id}">Editar</button>
+              </div>
+            `;
+            cardsList.appendChild(el);
+          });
+        }
+
+        function renderLanguages(languages) {
+          languagesList.innerHTML = "";
+          languages.forEach((lang) => {
+            const el = document.createElement("div");
+            el.className = "language-item";
+            el.innerHTML = `
+              <input type="checkbox" class="language-checkbox" data-id="${lang.id}">
+              <div class="language-content">
+                <h3>${lang.name}</h3>
+                <p>${lang.description || ''}</p>
+                <p><strong>Elementos:</strong> ${lang.element_count}</p>
+                <button class="btn btn-secondary edit-language-btn" data-id="${lang.id}">Editar</button>
+              </div>
+            `;
+            languagesList.appendChild(el);
+          });
+        }
+
+        function renderUsers(users) {
+          usersList.innerHTML = "";
+          users.forEach((userItem) => {
+            const el = document.createElement("div");
+            el.className = "language-item";
+            el.innerHTML = `
+              <input type="checkbox" class="user-checkbox" data-id="${userItem.id}">
+              <div class="language-content">
+                <h3>${userItem.username}</h3>
+                <p><strong>Rol:</strong> ${rolesMap.get(userItem.role_id) || 'usuario'}</p>
+                <p><strong>ID:</strong> ${userItem.id}</p>
+                <button class="btn btn-secondary edit-user-btn" data-id="${userItem.id}">Editar</button>
+              </div>
+            `;
+            usersList.appendChild(el);
+          });
+        }
+
+        function renderReports(reports) {
+          reportsList.innerHTML = "";
+          reports.forEach((report) => {
+            const el = document.createElement("div");
+            el.className = "language-item";
+            el.innerHTML = `
+              <input type="checkbox" class="report-checkbox" data-id="${report.id}">
+              <div class="language-content">
+                <h3>${report.entity_type.toUpperCase()} - ${report.target_name || report.target_id}</h3>
+                <p><strong>Estado:</strong> ${report.status}</p>
+                <p><strong>Reportado por:</strong> ${usersMap.get(report.reporter_id) || report.reporter_id}</p>
+                <p><strong>Fecha:</strong> ${new Date(report.created_at).toLocaleString()}</p>
+                <p>${report.description || ''}</p>
+                <button class="btn btn-secondary edit-report-btn" data-id="${report.id}">Ver / Actualizar</button>
+              </div>
+            `;
+            reportsList.appendChild(el);
+          });
+        }
+
+        tabCards.onclick = () => {
+          tabCards.classList.add('active');
+          tabLanguages.classList.remove('active');
+          tabUsers.classList.remove('active');
+          cardsTab.style.display = 'block';
+          languagesTab.style.display = 'none';
+          usersTab.style.display = 'none';
+        };
+
+        tabLanguages.onclick = () => {
+          tabLanguages.classList.add('active');
+          tabCards.classList.remove('active');
+          tabUsers.classList.remove('active');
+          languagesTab.style.display = 'block';
+          cardsTab.style.display = 'none';
+          usersTab.style.display = 'none';
+        };
+
+        tabUsers.onclick = () => {
+          tabUsers.classList.add('active');
+          tabCards.classList.remove('active');
+          tabLanguages.classList.remove('active');
+          tabReports.classList.remove('active');
+          usersTab.style.display = 'block';
+          cardsTab.style.display = 'none';
+          languagesTab.style.display = 'none';
+          reportsTab.style.display = 'none';
+        };
+
+        tabReports.onclick = () => {
+          tabReports.classList.add('active');
+          tabCards.classList.remove('active');
+          tabLanguages.classList.remove('active');
+          tabUsers.classList.remove('active');
+          reportsTab.style.display = 'block';
+          cardsTab.style.display = 'none';
+          languagesTab.style.display = 'none';
+          usersTab.style.display = 'none';
+        };
+
+        searchCards.oninput = () => {
+          const query = searchCards.value.toLowerCase();
+          const filtered = allCards.filter(card =>
+            (card.titulo || '').toLowerCase().includes(query) ||
+            (card.descripcion || '').toLowerCase().includes(query) ||
+            (usersMap.get(card.user_id) || '').toLowerCase().includes(query)
+          );
+          renderCards(filtered);
+        };
+
+        clearSearchCards.onclick = () => {
+          searchCards.value = '';
+          renderCards(allCards);
+        };
+
+        searchUsers.oninput = () => {
+          const query = searchUsers.value.toLowerCase();
+          const filtered = allUsers.filter(userItem =>
+            (userItem.username || '').toLowerCase().includes(query) ||
+            (rolesMap.get(userItem.role_id) || '').toLowerCase().includes(query)
+          );
+          renderUsers(filtered);
+        };
+
+        clearSearchUsers.onclick = () => {
+          searchUsers.value = '';
+          renderUsers(allUsers);
+        };
+
+        searchReports.oninput = () => {
+          const query = searchReports.value.toLowerCase();
+          const filtered = allReports.filter(report =>
+            (report.entity_type || '').toLowerCase().includes(query) ||
+            (report.target_name || '').toLowerCase().includes(query) ||
+            (report.status || '').toLowerCase().includes(query) ||
+            (usersMap.get(report.reporter_id) || '').toLowerCase().includes(query)
+          );
+          renderReports(filtered);
+        };
+
+        clearSearchReports.onclick = () => {
+          searchReports.value = '';
+          renderReports(allReports);
+        };
+
+        searchLanguages.oninput = () => {
+          const query = searchLanguages.value.toLowerCase();
+          const filtered = allLanguages.filter(lang =>
+            lang.name.toLowerCase().includes(query) ||
+            lang.description?.toLowerCase().includes(query)
+          );
+          renderLanguages(filtered);
+        };
+
+        clearSearchLanguages.onclick = () => {
+          searchLanguages.value = '';
+          renderLanguages(allLanguages);
+        };
+
+        document.body.addEventListener('click', async (event) => {
+          const editCardBtn = event.target.closest('.edit-card-btn');
+          const editLanguageBtn = event.target.closest('.edit-language-btn');
+
+          if (editCardBtn) {
+            const cardId = editCardBtn.dataset.id;
+            const card = allCards.find((item) => item.id === cardId);
+            if (!card) return;
+            openAdminModal('card', card);
+            return;
+          }
+
+          if (editLanguageBtn) {
+            const languageId = editLanguageBtn.dataset.id;
+            const lang = allLanguages.find((item) => item.id.toString() === languageId.toString());
+            if (!lang) return;
+            openAdminModal('language', lang);
+            return;
+          }
+
+          const editUserBtn = event.target.closest('.edit-user-btn');
+          if (editUserBtn) {
+            const userId = editUserBtn.dataset.id;
+            const userItem = allUsers.find((item) => item.id === userId);
+            if (!userItem) return;
+            openAdminModal('user', userItem);
+            return;
+          }
+
+          const editReportBtn = event.target.closest('.edit-report-btn');
+          if (editReportBtn) {
+            const reportId = editReportBtn.dataset.id;
+            const reportItem = allReports.find((item) => item.id === reportId);
+            if (!reportItem) return;
+            openAdminModal('report', reportItem);
+            return;
+          }
+        });
+
+        deleteSelectedCards.onclick = async () => {
+          const selected = Array.from(document.querySelectorAll('.card-checkbox:checked')).map(cb => cb.dataset.id);
+          if (selected.length === 0) {
+            alert('Selecciona al menos una tarjeta.');
+            return;
+          }
+          if (confirm(`¿Eliminar ${selected.length} tarjeta(s)?`)) {
+            const { error } = await supabase
+              .from('cards')
+              .delete()
+              .in('id', selected);
+            if (error) alert('Error: ' + error.message);
+            else loadCards();
+          }
+        };
+
+        deleteSelectedLanguages.onclick = async () => {
+          const selected = Array.from(document.querySelectorAll('.language-checkbox:checked')).map(cb => cb.dataset.id);
+          if (selected.length === 0) {
+            alert('Selecciona al menos un lenguaje.');
+            return;
+          }
+          if (confirm(`¿Eliminar ${selected.length} lenguaje(s)?`)) {
+            const { error } = await supabase
+              .from('languages')
+              .delete()
+              .in('id', selected);
+            if (error) alert('Error: ' + error.message);
+            else loadLanguages();
+          }
+        };
+
+        deleteSelectedUsers.onclick = async () => {
+          const selected = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.dataset.id);
+          if (selected.length === 0) {
+            alert('Selecciona al menos un usuario.');
+            return;
+          }
+          if (confirm(`¿Eliminar ${selected.length} usuario(s) de perfiles?`)) {
+            const { error } = await supabase
+              .from('perfiles')
+              .delete()
+              .in('id', selected);
+            if (error) alert('Error: ' + error.message);
+            else loadUsers();
+          }
+        };
+
+        closeAdminModal.onclick = closeAdminModalFn;
+        cancelAdminModalBtn.onclick = closeAdminModalFn;
+        window.onclick = (event) => {
+          if (event.target === adminModal) closeAdminModalFn();
+        };
+        saveAdminModalBtn.onclick = saveAdminModal;
+
+        getUser();
+
+        function openAdminModal(type, item) {
+          currentAdminType = type;
+          currentAdminItem = item;
+          adminModalTitle.textContent = type === 'card' ? 'Editar tarjeta' : type === 'language' ? 'Editar lenguaje' : type === 'user' ? 'Editar usuario' : 'Ver reporte';
+
+          if (type === 'card') {
+            adminModalBody.innerHTML = `
+              <div class="form-group">
+                <label>Título</label>
+                <input type="text" id="adminFieldTitulo" value="${item.titulo || ''}" />
+              </div>
+              <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="adminFieldDescripcion">${item.descripcion || ''}</textarea>
+              </div>
+              <div class="form-group">
+                <label>Contenido</label>
+                <textarea id="adminFieldContenido">${item.contenido || ''}</textarea>
+              </div>
+              <div class="form-group">
+                <label>Lenguaje</label>
+                <select id="adminFieldLanguageId">
+                  ${allLanguages.map(lang => `<option value="${lang.id}" ${lang.id.toString() === (item.language_id || '').toString() ? 'selected' : ''}>${lang.name}</option>`).join('')}
+                </select>
+              </div>
+            `;
+          } else if (type === 'language') {
+            adminModalBody.innerHTML = `
+              <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="adminFieldName" value="${item.name || ''}" />
+              </div>
+              <div class="form-group">
+                <label>Icono</label>
+                <input type="text" id="adminFieldIcon" value="${item.icon || ''}" />
+              </div>
+              <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="adminFieldDescription">${item.description || ''}</textarea>
+              </div>
+              <div class="form-group">
+                <label>Elementos</label>
+                <input type="number" id="adminFieldElementCount" value="${item.element_count || 0}" />
+              </div>
+            `;
+          } else if (type === 'user') {
+            adminModalBody.innerHTML = `
+              <div class="form-group">
+                <label>Nombre de usuario</label>
+                <input type="text" id="adminFieldUsername" value="${item.username || ''}" />
+              </div>
+              <div class="form-group">
+                <label>Rol</label>
+                <select id="adminFieldRoleId">
+                  ${allRoles.map(role => `<option value="${role.id}" ${role.id.toString() === (item.role_id || '').toString() ? 'selected' : ''}>${role.name}</option>`).join('')}
+                </select>
+              </div>
+            `;
+          } else if (type === 'report') {
+            adminModalBody.innerHTML = `
+              <div class="form-group">
+                <label>Tipo</label>
+                <input type="text" readonly value="${item.entity_type}" />
+              </div>
+              <div class="form-group">
+                <label>Objetivo</label>
+                <input type="text" readonly value="${item.target_name || item.target_id}" />
+              </div>
+              <div class="form-group">
+                <label>Reportado por</label>
+                <input type="text" readonly value="${usersMap.get(item.reporter_id) || item.reporter_id}" />
+              </div>
+              <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="adminFieldDescription">${item.description || ''}</textarea>
+              </div>
+              <div class="form-group">
+                <label>Estado</label>
+                <select id="adminFieldReportStatus">
+                  <option value="pendiente" ${item.status === 'pendiente' ? 'selected' : ''}>pendiente</option>
+                  <option value="resuelto" ${item.status === 'resuelto' ? 'selected' : ''}>resuelto</option>
+                  <option value="rechazado" ${item.status === 'rechazado' ? 'selected' : ''}>rechazado</option>
+                </select>
+              </div>
+            `;
+          }
+
+          adminModal.style.display = 'block';
+        }
+
+        function closeAdminModalFn() {
+          adminModal.style.display = 'none';
+          currentAdminType = null;
+          currentAdminItem = null;
+          adminModalBody.innerHTML = '';
+        }
+
+        async function saveAdminModal() {
+          if (!currentAdminType || !currentAdminItem) return;
+
+          if (currentAdminType === 'card') {
+            const titulo = document.getElementById('adminFieldTitulo').value.trim();
+            const descripcion = document.getElementById('adminFieldDescripcion').value.trim();
+            const contenido = document.getElementById('adminFieldContenido').value.trim();
+            const language_id = document.getElementById('adminFieldLanguageId').value;
+            const { error } = await supabase.from('cards').update({
+              titulo,
+              descripcion,
+              contenido,
+              language_id,
+              updated_at: new Date().toISOString(),
+            }).eq('id', currentAdminItem.id);
+            if (error) return alert('Error guardando tarjeta: ' + error.message);
+            loadCards();
+          }
+
+          if (currentAdminType === 'language') {
+            const name = document.getElementById('adminFieldName').value.trim();
+            const icon = document.getElementById('adminFieldIcon').value.trim();
+            const description = document.getElementById('adminFieldDescription').value.trim();
+            const element_count = parseInt(document.getElementById('adminFieldElementCount').value, 10) || 0;
+            const { error } = await supabase.from('languages').update({
+              name,
+              icon,
+              description,
+              element_count,
+            }).eq('id', currentAdminItem.id);
+            if (error) return alert('Error guardando lenguaje: ' + error.message);
+            loadLanguages();
+          }
+
+          if (currentAdminType === 'user') {
+            const username = document.getElementById('adminFieldUsername').value.trim();
+            const role_id = parseInt(document.getElementById('adminFieldRoleId').value, 10);
+            const { error } = await supabase.from('perfiles').update({
+              username,
+              role_id,
+            }).eq('id', currentAdminItem.id);
+            if (error) return alert('Error guardando usuario: ' + error.message);
+            loadUsers();
+          }
+
+          if (currentAdminType === 'report') {
+            const description = document.getElementById('adminFieldDescription').value.trim();
+            const status = document.getElementById('adminFieldReportStatus').value;
+            const { error } = await supabase.from('reports').update({
+              description,
+              status,
+            }).eq('id', currentAdminItem.id);
+            if (error) return alert('Error guardando reporte: ' + error.message);
+            loadReports();
+          }
+
+          closeAdminModalFn();
+        }
+      });
+    </script>
+  </body>
+</html>
