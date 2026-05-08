@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>MenosTime </title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+background:#0b0f1a;
+font-family:Arial;
+color:white;
+overflow:hidden;
+}
+
+/* LOGIN */
+
+.login{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#0b0f1a;
+z-index:100;
+}
+
+.card{
+width:350px;
+background:#111827;
+padding:25px;
+border-radius:15px;
+border:1px solid #1f2937;
+}
+
+.card h2{
+margin-bottom:20px;
+}
+
+.login input{
+width:100%;
+padding:12px;
+background:#1f2937;
+border:none;
+outline:none;
+color:white;
+border-radius:10px;
+margin-bottom:15px;
+}
+
+.login button{
+width:100%;
+}
+
+/* APP */
+
+.container{
+display:flex;
+height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+width:260px;
+background:#111827;
+border-right:1px solid #222;
+display:flex;
+flex-direction:column;
+}
+
+.top-buttons{
+padding:10px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.server-list{
+flex:1;
+overflow:auto;
+padding:10px;
+}
+
+.server{
+background:#1f2937;
+padding:12px;
+border-radius:10px;
+margin-bottom:10px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.server:hover{
+background:#374151;
+}
+
+.user-box{
+padding:15px;
+background:#0f172a;
+border-top:1px solid #222;
+}
+
+/* CHAT */
+
+.chat{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+.chat-header{
+height:60px;
+background:#111827;
+border-bottom:1px solid #222;
+display:flex;
+align-items:center;
+padding:0 20px;
+font-weight:bold;
+}
+
+.chat-box{
+flex:1;
+overflow:auto;
+padding:20px;
+}
+
+.msg{
+background:#111827;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+.msg-user{
+font-weight:bold;
+color:#00d4ff;
+margin-bottom:5px;
+}
+
+.msg-time{
+font-size:12px;
+opacity:0.6;
+margin-top:5px;
+}
+
+/* INPUT */
+
+.input-area{
+padding:15px;
+background:#111827;
+display:flex;
+gap:10px;
+}
+
+.input-area input{
+flex:1;
+padding:14px;
+background:#1f2937;
+border:none;
+outline:none;
+color:white;
+border-radius:10px;
+}
+
+button{
+background:#00d4ff;
+border:none;
+padding:12px;
+font-weight:bold;
+cursor:pointer;
+border-radius:10px;
+transition:0.2s;
+}
+
+button:hover{
+opacity:0.8;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div class="login" id="loginPage">
+
+<div class="card">
+
+<h2>MenosTime </h2>
+
+<input id="username" placeholder="Tu nombre">
+
+<button onclick="login()">
+Entrar
+</button>
+
+</div>
+
+</div>
+
+<!-- APP -->
+
+<div class="container" id="app" style="display:none;">
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+<div class="top-buttons">
+
+<button onclick="createServer()">
++ Crear servidor
+</button>
+
+<button onclick="joinServer()">
++ Unirse
+</button>
+
+</div>
+
+<div class="server-list" id="servers"></div>
+
+<div class="user-box">
+
+<div id="userText"></div>
+
+<button style="margin-top:10px;width:100%;" onclick="logout()">
+Cerrar sesión
+</button>
+
+</div>
+
+</div>
+
+<!-- CHAT -->
+
+<div class="chat">
+
+<div class="chat-header" id="serverTitle">
+Selecciona un servidor
+</div>
+
+<div class="chat-box" id="chatBox"></div>
+
+<div class="input-area">
+
+<input
+id="messageInput"
+placeholder="Escribe un mensaje..."
+onkeydown="enterSend(event)"
+>
+
+<button onclick="sendMessage()">
+Enviar
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+/* SUPABASE */
+
+const sb = window.supabase.createClient(
+"https://ttmrvogucsmujegurmvi.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bXJ2b2d1Y3NtdWplZ3VybXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDE2OTIsImV4cCI6MjA5Mjk3NzY5Mn0.8NrHzYYIXrTYOpdLJafAemXnZ8bJ1DhVwSU7hQx_3pQ"
+);
+
+/* VARIABLES */
+
+let currentUser = null;
+let currentServer = null;
+let chatInterval = null;
+
+/* LOGIN */
+
+async function login(){
+
+const username = document
+.getElementById("username")
+.value
+.trim();
+
+if(!username){
+alert("Escribe nombre");
+return;
+}
+
+/* verificar usuario */
+
+let { data } = await sb
+.from("users")
+.select("*")
+.eq("username", username)
+.single();
+
+/* si no existe lo crea */
+
+if(!data){
+
+await sb.from("users").insert({
+username
+});
+
+}
+
+currentUser = username;
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("app").style.display="flex";
+
+document.getElementById("userText").innerText =
+"👤 " + currentUser;
+
+loadServers();
+
+}
+
+/* LOGOUT */
+
+function logout(){
+
+currentUser = null;
+currentServer = null;
+
+clearInterval(chatInterval);
+
+document.getElementById("chatBox").innerHTML="";
+document.getElementById("servers").innerHTML="";
+
+document.getElementById("loginPage").style.display="flex";
+document.getElementById("app").style.display="none";
+
+}
+
+/* CREATE SERVER */
+
+async function createServer(){
+
+if(!currentUser) return;
+
+const name = prompt("Nombre del servidor");
+const code = prompt("Código para entrar");
+
+if(!name || !code) return;
+
+await sb.from("servers").insert({
+name,
+code,
+created_by: currentUser
+});
+
+loadServers();
+
+}
+
+/* LOAD SERVERS */
+
+async function loadServers(){
+
+let { data } = await sb
+.from("servers")
+.select("*")
+.order("created_at");
+
+const box = document.getElementById("servers");
+
+box.innerHTML="";
+
+(data || []).forEach(server=>{
+
+const div = document.createElement("div");
+
+div.className="server";
+
+div.innerHTML=`
+<div>${server.name}</div>
+<small>${server.code}</small>
+`;
+
+div.onclick=()=>{
+joinDirect(server.code, server.name);
+};
+
+box.appendChild(div);
+
+});
+
+}
+
+/* JOIN */
+
+function joinServer(){
+
+const code = prompt("Código servidor");
+
+if(!code) return;
+
+joinDirect(code, code);
+
+}
+
+/* DIRECT JOIN */
+
+function joinDirect(code,name){
+
+currentServer = code;
+
+document.getElementById("serverTitle").innerText =
+"💬 " + name;
+
+loadMessages();
+
+clearInterval(chatInterval);
+
+chatInterval = setInterval(()=>{
+loadMessages();
+},1500);
+
+}
+
+/* SEND */
+
+async function sendMessage(){
+
+if(!currentUser){
+alert("Login requerido");
+return;
+}
+
+if(!currentServer){
+alert("Únete a un servidor");
+return;
+}
+
+const input = document.getElementById("messageInput");
+
+const content = input.value.trim();
+
+if(!content) return;
+
+await sb.from("messages").insert({
+server_code: currentServer,
+username: currentUser,
+content
+});
+
+input.value="";
+
+loadMessages();
+
+}
+
+/* ENTER SEND */
+
+function enterSend(e){
+
+if(e.key === "Enter"){
+sendMessage();
+}
+
+}
+
+/* LOAD MESSAGES */
+
+async function loadMessages(){
+
+if(!currentServer) return;
+
+let { data } = await sb
+.from("messages")
+.select("*")
+.eq("server_code", currentServer)
+.order("created_at");
+
+const box = document.getElementById("chatBox");
+
+box.innerHTML="";
+
+(data || []).forEach(msg=>{
+
+const div = document.createElement("div");
+
+div.className="msg";
+
+div.innerHTML=`
+
+<div class="msg-user">
+${msg.username}
+</div>
+
+<div>
+${msg.content}
+</div>
+
+<div class="msg-time">
+${new Date(msg.created_at).toLocaleTimeString()}
+</div>
+
+`;
+
+box.appendChild(div);
+
+});
+
+box.scrollTop = box.scrollHeight;
+
+}
+
+</script>
+
+</body>
+</html>
