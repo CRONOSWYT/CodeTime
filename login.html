@@ -56,7 +56,7 @@
             required
             placeholder="Nombre visible en la Pagina"
           />
-        </div>
+      </div>
 
         <div class="grupo_formulario">
           <label>Contraseña</label>
@@ -174,8 +174,8 @@
       <br>
 
       <p>
-        El botón de Discord está en la página principal,
-        en la parte superior derecha.
+        El botón de Discord lo puedes econtrar
+        En la página principal puedes encontrarlo en el botón <b>Redes</b> de la parte superior derecha.
       </p>
 
       <br>
@@ -269,20 +269,57 @@
         ]);
       }
 
+      let sessionUser = null;
+      let sessionUserSession = null;
+
       function saveUserToStorage(user, session) {
         localStorage.setItem("user", JSON.stringify(user));
 
         localStorage.setItem("session", JSON.stringify(session));
       }
 
+       async function ensureProfileForUser(userId) {
+        const { data: perfil, error } = await supabaseClient
+          .from("perfiles")
+          .select("id, username")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (error) {
+          showError("Error comprobando perfil: " + error.message);
+          return null;
+        }
+
+        return perfil;
+      }
+
+      function setFormStateForOAuth(user) {
+        email.value = user.email || "";
+        email.disabled = true;
+        const passwordGroup = password.closest(".grupo_formulario");
+        if (passwordGroup) {
+          passwordGroup.style.display = "none";
+        }
+        showWarning(
+          "Tu sesión de Google/GitHub está activa. Completa tu nombre de usuario para continuar."
+        );
+      }
 
       async function checkUserSession() {
         const { data } = await supabaseClient.auth.getSession();
 
         if (data?.session?.user) {
-          saveUserToStorage(data.session.user, data.session);
+          sessionUser = data.session.user;
+          sessionUserSession = data.session;
 
-          window.location.href = "CodeTime.html";
+          const perfil = await ensureProfileForUser(sessionUser.id);
+          if (perfil && perfil.username && perfil.username.trim().length >= 3) {
+            saveUserToStorage(sessionUser, data.session);
+            window.location.href = "CodeTime.html";
+            return;
+          }
+
+          setFormStateForOAuth(sessionUser);
         }
       }
 

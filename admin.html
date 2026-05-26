@@ -10,54 +10,27 @@
     <link rel="stylesheet" href="styles/general.css" />
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Markdown Library -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-
-     <style>
-          /* Preload crítico */
-    .critical-resource{font-display:swap}
-      #loader {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: #010101;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    #loader.hidden {
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.5s ease, visibility 0.5s;
-    }
-    #loader img {
-      max-width: 80vw;
-      max-height: 80vh;
-      width: auto;
-      height: auto;
-    }
-    </style>
-    <div id="loader">
-    <video src="video/carga.webm" autoplay loop muted></video>
-  </div>
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const loader = document.getElementById('loader');
-        setTimeout(() => {
-      if (loader) loader.classList.add('hidden');
-    }, 3000); // 3000 = 3 segundos
-  });
-  </script>
   </head>
 
   <body>
+    <div id="loader">
+      <video src="video/carga.webm" autoplay loop muted></video>
+    </div>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('loader');
+        setTimeout(() => {
+          if (loader) loader.classList.add('hidden');
+        }, 3000); // 3000 = 3 segundos
+      });
+    </script>
+
     <div class="container">
       <header class="header" role="banner">
         <div class="contenido_encabezado">
@@ -283,7 +256,6 @@
                     <th>Tipo de Entidad</th>
                     <th>Descripción de Cambios</th>
                     <th>Fecha y Hora</th>
-                    <th>Detalles</th>
                   </tr>
                 </thead>
                 <tbody id="lista_logs_admin"></tbody>
