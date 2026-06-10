@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>CodeTime Wiki</title>
+
+  <link rel="icon" href="icons/logo.ico" />
+  <link rel="stylesheet" href="styles/general.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Markdown Library -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- SWEETALERT2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/CodeTime Wiki.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+
+<body>
+  <div class="container">
+    <header class="header" role="banner">
+      <div class="contenido_encabezado">
+        <!-- Logo como icono principal -->
+        <div class="contenedor_logo">
+          <img src="icons/logo.ico" alt="CodeTime Wiki - Logo de la plataforma de referencia de código" class="logo_icon"
+            width="48" height="48" />
+          <h1 class="visually-hidden">CodeTime Wiki</h1>
+        </div>
+        <div class="acciones_encabezado">
+          <div class="contenedor_boton_discord">
+            <a href="https://www.paypal.com/donate/?hosted_button_id=CZRSDAVA26RA4" class="boton_inicio">
+              <i class="fa-solid fa-hand-holding-heart"></i>
+              <span>Donar</span>
+            </a>
+          </div>
+          <div class="contenedor_boton_discord boton_inicio" id="redesBtn">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Redes</span>
+          </div>
+          <div class="contenedor_boton_perfil">
+            <button id="boton_editar_perfil" class="boton_inicio" style="display:none;"><i class="fas fa-user-edit"></i>
+              Perfil</button>
+          </div>
+          <div class="contenedor_boton_inicio">
+                <a href="index.html" class="boton_inicio">
+                    <i class="fas fa-home"></i>
+                    <span>Inicio</span>
+                </a>
+            </div>
+          <div class="contenedor_boton_inicio">
+            <button id="boton_inicio_sesion" class="boton_inicio"><i class="fa-solid fa-right-to-bracket"></i> Inicio de
+              Sesión</button>
+            <button id="boton_cerrar_sesion" class="boton_inicio" style="display:none;"><i
+                class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+          </div>
+        </div>
+    </header>
+
+    <main class="content">
+      <section class="seccion_bienvenida">
+        <h1>CodeTime Wiki</h1>
+
+        <div class="contador_total">
+          <h2>Total: <span id="contador_total">0</span></h2>
+          <p id="texto_total">Cargando...</p>
+        </div>
+      </section>
+      <div class="contenedor_busqueda">
+        <div class="caja_busqueda">
+          <i class="fas fa-search icono_busqueda"></i>
+          <input type="text" id="entrada_busqueda" placeholder="Buscar lenguajes..." />
+        </div>
+        <button id="boton_limpiar_busqueda" class="boton_limpiar" aria-label="Limpiar búsqueda">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <button id="boton_agregar_lenguaje" class="btn boton_lenguaje" style="display: none">
+        <i class="fas fa-plus"></i> Nuevo Lenguaje
+      </button>
+
+      <section class="rejilla_lenguajes" id="rejilla_lenguajes"></section>
+
+    </main>
+
+    <footer class="pie_sitio">
+      <p>© 2026 CodeTime Wiki</p>
+    </footer>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal_ver_tarjeta" class="modal">
+    <div class="modal_contenido">
+      <button class="modal_cerrar" id="cerrar_modal">&times;<!-- x --></button>
+      <div class="modal_encabezado">
+        <h2>Nuevo Lenguaje</h2>
+      </div>
+      <div class="modal_cuerpo">
+        <div class="grupo_formulario">
+          <label for="nombre_lenguaje">Nombre:</label>
+          <input id="nombre_lenguaje" placeholder="Nombre (HTML)" />
+        </div>
+        <div class="grupo_formulario">
+          <label for="icono_lenguaje_input">Icono:</label>
+          <input id="icono_lenguaje_input" placeholder="Icono (fab fa-html5)" />
+        </div>
+        <div class="grupo_formulario">
+          <label for="descripcion_lenguaje">Descripción:</label>
+          <textarea id="descripcion_lenguaje" placeholder="Descripción"></textarea>
+        </div>
+        <div class="modal_acciones">
+          <button id="boton_guardar_lenguaje" class="btn ">Guardar</button>
+          <br>
+          <button id="boton_cancelar_modal" class="btn">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PERFIL -->
+  <div id="modal_perfil" class="modal">
+    <div class="modal_contenido">
+      <button class="modal_cerrar" id="cerrar_modal_perfil">&times;</button>
+      <div class="modal_encabezado">
+        <h2>Completa tu perfil</h2>
+      </div>
+      <div class="modal_cuerpo">
+        <div class="grupo_formulario">
+          <label for="usuario_perfil">Nombre de usuario:</label>
+          <input id="usuario_perfil" placeholder="Nombre visible en la plataforma" maxlength="50" />
+        </div>
+        <button id="boton_guardar_perfil" class="btn boton_primario">Guardar perfil</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal_reporte" class="modal">
+    <div class="modal_contenido">
+      <button class="modal_cerrar" id="cerrar_modal_reporte">&times;</button>
+      <div class="modal_encabezado">
+        <h2 id="titulo_modal_reporte">Reportar</h2>
+      </div>
+      <div class="modal_cuerpo">
+        <div class="grupo_formulario">
+          <label>Qué deseas reportar</label>
+          <input id="objetivo_reporte" type="text" readonly />
+        </div>
+        <div class="grupo_formulario">
+          <label for="descripcion_reporte">Descripción del reporte</label>
+          <textarea id="descripcion_reporte" placeholder="Explica el motivo del reporte" rows="4"></textarea>
+        </div>
+        <div class="modal_acciones">
+          <button id="boton_enviar_reporte" class="btn boton_primario">Enviar reporte</button>
+          <button id="boton_cancelar_reporte" class="btn boton_secundario">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+
+    Swal.fire({
+      title: "Code Time - Información y soporte",
+      html: `
+    <div style="
+      padding:20px;
+      border-radius:12px;
+      background:rgba(0,212,255,0.08);
+      border:1px solid rgba(0,212,255,0.2);
+      text-align:left;
+      color:white;
+      line-height:1.6;
+    ">
+      <h3 style="
+        color:#00d4ff;
+        margin-bottom:15px;
+        text-align:center;
+      ">
+        Información y soporte
+      </h3>
+
+      <p>
+        Si encuentras un error en una tarjeta de lenguaje
+        o ves algún problema, puedes usar el botón que está
+        al lado del corazón.
+      </p>
+
+      <br>
+
+      <p>
+        Ese es el botón de reporte de la tarjeta de lenguaje,
+        y desde ahí podrás reportar cualquier problema
+        que encuentres.
+      </p>
+
+      <br>
+
+      <p>
+        Si tienes otro tipo de problema en la página,
+        puedes contactar al soporte desde el botón
+        <b>"Redes"</b>.
+      </p>
+
+      <br>
+
+      <p>
+        Dentro del botón de Redes encontrarás el Discord oficial
+        de Code Time, donde podrás pedir ayuda, reportar errores
+        o comunicar cualquier otro inconveniente.
+      </p>
+
+      <br>
+
+      <p>
+        Para crear un lenguaje se utiliza el sistema
+        de iconos de la librería:
+      </p>
+
+      <br>
+
+      <a
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        target="_blank"
+        style="
+          color:#00d4ff;
+          text-decoration:none;
+          font-weight:bold;
+          word-break:break-all;
+        "
+      >
+        Font Awesome
+      </a>
+
+      <br><br>
+
+      <p>
+        Los iconos se escriben de esta forma:
+      </p>
+
+      <pre style="
+        background:rgba(0,0,0,0.3);
+        padding:10px;
+        border-radius:8px;
+        overflow:auto;
+        color:#00d4ff;
+      ">fab fa-(nombre-del-lenguaje)</pre>
+
+      <p>
+        Por ejemplo:
+      </p>
+
+      <pre style="
+        background:rgba(0,0,0,0.3);
+        padding:10px;
+        border-radius:8px;
+        overflow:auto;
+        color:#00d4ff;
+      ">fab fa-html5</pre>
+
+      <p>
+        También puedes buscar en Google el nombre
+        del icono que necesitas para Font Awesome.
+      </p>
+
+      <br>
+
+      <p style="text-align:center;">
+        Ya sabes <br>
+        Si necesitas ayuda o cualquier otra cosa,
+        puedes entrar al botón de Redes, ahí estará todo.
+      </p>
+    </div>
+  `,
+      width: 700
+    });
+
+    document.getElementById("redesBtn").addEventListener("click", () => {
+
+      Swal.fire({
+        title: "Code Time - Redes y soporte",
+        html: `
+    <div style="
+      padding:20px;
+      border-radius:12px;
+      background:rgba(0,212,255,0.08);
+      border:1px solid rgba(0,212,255,0.2);
+      text-align:left;
+      color:white;
+      line-height:1.7;
+    ">
+
+      <h3 style="
+        color:#00d4ff;
+        text-align:center;
+        margin-bottom:20px;
+      ">
+        Redes oficiales de Code Time
+      </h3>
+
+      <div style="
+        padding:15px;
+        border-radius:12px;
+        background:rgba(88,101,242,0.12);
+        border:1px solid rgba(88,101,242,0.4);
+        margin-bottom:20px;
+      ">
+        <h2 style="
+          color:#7289da;
+          text-align:center;
+          margin-bottom:10px;
+        ">
+          <i class="fa-brands fa-discord"></i>
+          Discord - Soporte oficial
+        </h2>
+
+        <p>
+          Discord es la red principal de soporte de Code Time.
+        </p>
+
+        <p>
+          Ahí puedes:
+        </p>
+
+        <ul style="padding-left:20px;">
+          <li>Reportar errores</li>
+          <li>Pedir ayuda</li>
+          <li>Hablar con la comunidad</li>
+          <li>Enviar sugerencias</li>
+          <li>Recibir soporte</li>
+          <li>Conocer actualizaciones</li>
+        </ul>
+
+        <br>
+
+        <a
+          href="https://discord.gg/rstZKjtC9b"
+          target="_blank"
+          style="
+            display:block;
+            text-align:center;
+            background:#5865f2;
+            color:white;
+            padding:12px;
+            border-radius:10px;
+            text-decoration:none;
+            font-weight:bold;
+          "
+        >
+          Entrar al Discord
+        </a>
+      </div>
+
+      <h3 style="
+        color:#00d4ff;
+        margin-bottom:15px;
+        text-align:center;
+      ">
+        Otras redes
+      </h3>
+
+      <div style="
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+      ">
+
+        <a href="https://www.youtube.com/@WorldTimeOficial"
+          target="_blank"
+          style="
+            background:rgba(255,255,255,0.05);
+            padding:12px;
+            border-radius:10px;
+            color:white;
+            text-decoration:none;
+          ">
+          <i class="fa-brands fa-youtube"></i>
+          YouTube
+        </a>
+
+      </div>
+
+      <br>
+
+      <p style="text-align:center;">
+        Gracias por apoyar y formar parte de Code Time
+      </p>
+
+    </div>
+  `,
+        width: 700
+      });
+
+    });
+    // Funcionalidad para ocultar/mostrar header al hacer scroll
+    let lastScrollTop = 0;
+    const header = document.querySelector('.header');
+
+    window.addEventListener('scroll', function () {
+      let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+      if (scrollTop > lastScrollTop && scrollTop > 100) {
+        // Scrolling down - hide header
+        header.style.transform = 'translateY(-100%)';
+        header.style.transition = 'transform 0.3s ease-in-out';
+      } else {
+        // Scrolling up - show header
+        header.style.transform = 'translateY(0)';
+        header.style.transition = 'transform 0.3s ease-in-out';
+      }
+
+      lastScrollTop = scrollTop;
+    });
+  </script>
+</body>
+
+</html>
